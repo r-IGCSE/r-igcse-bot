@@ -45,8 +45,8 @@ export default class RecordSessionCommand extends BaseCommand {
 	) {
 		if (
 			!interaction.guild ||
-			interaction.guildId !== process.env.MAIN_GUILD_ID ||
-			interaction.guildId !== "230296179991248896"
+			(interaction.guildId !== process.env.MAIN_GUILD_ID &&
+				interaction.guildId !== "230296179991248896")
 		) {
 			await interaction.reply({
 				content: "This command is not enabled in this server.",
