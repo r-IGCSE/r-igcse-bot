@@ -302,19 +302,19 @@ export default class CreateDiscussionForumCommand extends BaseCommand {
 		} else {
 			await caieDiscussion.setAvailableTags([
 				{
-					emoji: { id: "1️⃣" },
+					emoji: { name: "1️⃣" },
 					name: "AS/AL Variant 1",
 					moderated: true,
 					id: SnowflakeUtil.generate().toString(),
 				},
 				{
-					emoji: { id: "2️⃣" },
+					emoji: { name: "2️⃣" },
 					name: "AS/AL Variant 2",
 					moderated: true,
 					id: SnowflakeUtil.generate().toString(),
 				},
 				{
-					emoji: { id: "3️⃣" },
+					emoji: { name: "3️⃣" },
 					name: "AS/AL Variant 3",
 					moderated: true,
 					id: SnowflakeUtil.generate().toString(),
