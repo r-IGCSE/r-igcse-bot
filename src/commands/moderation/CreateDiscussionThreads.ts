@@ -301,49 +301,49 @@ export default class CreateDiscussionForumCommand extends BaseCommand {
 			}
 		} else {
 			await caieDiscussion.setAvailableTags([
-				{
-					emoji: { id: "1089618794655272980" },
-					name: "AS/AL Variant 1",
-					moderated: true,
-					id: SnowflakeUtil.generate().toString(),
-				},
-				{
-					emoji: { id: "1089618793703145542" },
-					name: "AS/AL Variant 2",
-					moderated: true,
-					id: SnowflakeUtil.generate().toString(),
-				},
-				{
-					emoji: { id: "1089618791903809606" },
-					name: "AS/AL Variant 3",
-					moderated: true,
-					id: SnowflakeUtil.generate().toString(),
-				},
-				{
-					emoji: { name: "1️⃣" },
-					name: "IGCSE Variant 1",
-					moderated: true,
-					id: SnowflakeUtil.generate().toString(),
-				},
-				{
-					emoji: { name: "2️⃣" },
-					name: "IGCSE Variant 2",
-					moderated: true,
-					id: SnowflakeUtil.generate().toString(),
-				},
-				{
-					emoji: { name: "3️⃣" },
-					name: "IGCSE Variant 3",
-					moderated: true,
-					id: SnowflakeUtil.generate().toString(),
-				},
-				{
-					emoji: { name: "🥼" },
-					name: "AS/AL Practical",
-					moderated: true,
-					id: SnowflakeUtil.generate().toString(),
-				},
-			]);
+        {
+          emoji: { name: "1️⃣" },
+          name: "AS/AL Variant 1",
+          moderated: true,
+          id: SnowflakeUtil.generate().toString(),
+        },
+        {
+          emoji: { name: "2️⃣" },
+          name: "AS/AL Variant 2",
+          moderated: true,
+          id: SnowflakeUtil.generate().toString(),
+        },
+        {
+          emoji: { name: "3️⃣" },
+          name: "AS/AL Variant 3",
+          moderated: true,
+          id: SnowflakeUtil.generate().toString(),
+        },
+        {
+          emoji: { name: "1️⃣" },
+          name: "IGCSE Variant 1",
+          moderated: true,
+          id: SnowflakeUtil.generate().toString(),
+        },
+        {
+          emoji: { name: "2️⃣" },
+          name: "IGCSE Variant 2",
+          moderated: true,
+          id: SnowflakeUtil.generate().toString(),
+        },
+        {
+          emoji: { name: "3️⃣" },
+          name: "IGCSE Variant 3",
+          moderated: true,
+          id: SnowflakeUtil.generate().toString(),
+        },
+        {
+          emoji: { name: "🥼" },
+          name: "AS/AL Practical",
+          moderated: true,
+          id: SnowflakeUtil.generate().toString(),
+        },
+      ]);
 
 			caieVariants = [
 				caieDiscussionForums.ALevel.Variant1,
