@@ -1,5 +1,5 @@
 import { Punishment } from "@/mongo";
-import { GuildPreferencesCache } from "@/redis";
+import { GuildPreferencesCache, InfractionsCache } from "@/redis";
 import type { DiscordClient } from "@/registry/DiscordClient";
 import BaseCommand, {
 	type DiscordChatInputCommandInteraction,
@@ -14,7 +14,10 @@ import {
 	MessageFlags,
     InteractionContextType,
     ApplicationIntegrationType,
+	type AutocompleteInteraction,
 } from "discord.js";
+import { Logger } from "@discordforge/logger";
+import { infractionAutoComplete } from "../infractionAutoComplete";
 
 export default class BanCommand extends BaseCommand {
 	constructor() {
@@ -32,7 +35,8 @@ export default class BanCommand extends BaseCommand {
 					option
 						.setName("reason")
 						.setDescription("Reason for ban")
-						.setRequired(true),
+						.setRequired(true)
+						.setAutocomplete(true),
 				)
 				.addIntegerOption((option) =>
 					option
@@ -64,16 +68,23 @@ export default class BanCommand extends BaseCommand {
 		});
 
 		if (user.id === interaction.user.id) {
+			const error = new EmbedBuilder()
+				.setTitle(":lock: Wanna leave so badly?")
+				.setDescription("As much as I'd like to let you, you can't ban yourself. Though you can try ask someone else!")
+				.setColor(Colors.Red);
 			interaction.editReply({
-				content:
-					"Well hey, you can't ban yourself ||but **please** ask someone else to do it||!",
+				embeds: [error],
 			});
 			return;
 		}
 
 		if (await interaction.guild.bans.fetch(user.id).catch(() => null)) {
+			const error = new EmbedBuilder()
+				.setTitle(":lock: What a trouble maker")
+				.setDescription("I can't ban a user who is already banned.")
+				.setColor(Colors.Red);
 			interaction.editReply({
-				content: "I cannot ban a user that's already banned.",
+				embeds: [error],
 			});
 			return;
 		}
@@ -91,7 +102,8 @@ export default class BanCommand extends BaseCommand {
 		}
 
 		const dmEmbed = new EmbedBuilder()
-			.setTitle(`You have been banned from ${interaction.guild.name}!`)
+			.setTitle(":hammer: Banned")
+			.setTimestamp()
 			.setDescription(
 				`You have been banned from **${
 					interaction.guild.name
@@ -109,8 +121,12 @@ export default class BanCommand extends BaseCommand {
 
 		if (guildMember) {
 			if (!guildMember.bannable) {
-				await interaction.editReply({
-					content: "I cannot ban this user. (Missing permissions)",
+				const error = new EmbedBuilder()
+					.setTitle(":lock: What are you doing?")
+					.setDescription("I cannot ban this user.")
+					.setColor(Colors.Red);
+				interaction.editReply({
+					embeds: [error],
 				});
 				return;
 			}
@@ -118,14 +134,18 @@ export default class BanCommand extends BaseCommand {
 			const memberHighestRole = guildMember.roles.highest;
 			const modHighestRole = interaction.member.roles.highest;
 
-			if (memberHighestRole.comparePositionTo(modHighestRole) >= 0) {
+			// member role is higher than the moderators role
+			// ensure that server owners bypass this check
+			if (memberHighestRole.comparePositionTo(modHighestRole) >= 0 && (interaction.user.id !== interaction.guild.ownerId)) {
+				const error = new EmbedBuilder()
+					.setTitle(":lock: No Permission")
+					.setDescription("You are not allowed to kick this user as their role is higher than or equal to yours.")
+					.setColor(Colors.Red);
 				interaction.editReply({
-					content:
-						"You cannot ban this user due to role hierarchy! (Role is higher or equal to yours)",
+					embeds: [error],
 				});
 				return;
 			}
-
 			await sendDm(guildMember, {
 				embeds: [dmEmbed],
 			});
@@ -148,9 +168,6 @@ export default class BanCommand extends BaseCommand {
 				`${this.data.name} Command`,
 				`
 	* * Channel:** <#${interaction.channel?.id} >
-
-			  	
-
 					**User:** <@${interaction.user.id}>
 					**Guild:** ${interaction.guild.name} (${interaction.guildId})\n`,
 			);
@@ -177,13 +194,15 @@ export default class BanCommand extends BaseCommand {
 		});
 
 		interaction.channel.send(
-			`${user.username} has been banned. (Case #${caseNumber})`,
+			`:hammer: ${user.username} has been banned. (Case #${caseNumber})`,
 		);
 
 		if (guildPreferences.modlogChannelId) {
 			const modEmbed = new EmbedBuilder()
-				.setTitle(`Ban | Case #${caseNumber}`)
+				.setTitle(`:hammer: Ban | Case #${caseNumber}`)
 				.setColor(Colors.Red)
+				.setTimestamp()
+				.setThumbnail(user.displayAvatarURL())
 				.addFields([
 					{
 						name: "User",
@@ -212,4 +231,8 @@ export default class BanCommand extends BaseCommand {
 				"https://giphy.com/gifs/ban-banned-admin-fe4dDMD2cAU5RfEaCU",
 		});
 	}
+
+	async autoComplete(interaction: AutocompleteInteraction) {
+			await infractionAutoComplete(interaction);
+		}
 }

@@ -1,5 +1,6 @@
 import { Punishment } from "@/mongo";
-import { GuildPreferencesCache } from "@/redis";
+import { GuildPreferencesCache, InfractionsCache } from "@/redis";
+import { Logger } from "@discordforge/logger";
 import type { DiscordClient } from "@/registry/DiscordClient";
 import BaseCommand, {
 	type DiscordChatInputCommandInteraction,
@@ -12,9 +13,15 @@ import {
 	PermissionFlagsBits,
 	SlashCommandBuilder,
 	MessageFlags,
-    InteractionContextType,
-    ApplicationIntegrationType,
+	InteractionContextType,
+	ApplicationIntegrationType,
+	type AutocompleteInteraction,
+	ButtonStyle,
+	ButtonBuilder,
+	ActionRowBuilder,
 } from "discord.js";
+import { v4 as uuidv4 } from "uuid";
+import { infractionAutoComplete } from "../moderation/infractionAutoComplete";
 
 export default class WarnCommand extends BaseCommand {
 	constructor() {
@@ -32,7 +39,8 @@ export default class WarnCommand extends BaseCommand {
 					option
 						.setName("reason")
 						.setDescription("Reason for warn")
-						.setRequired(true),
+						.setRequired(true)
+						.setAutocomplete(true),
 				)
 				.setDefaultMemberPermissions(
 					PermissionFlagsBits.ModerateMembers,
@@ -51,26 +59,38 @@ export default class WarnCommand extends BaseCommand {
 		const user = interaction.options.getUser("user", true);
 		const reason = interaction.options.getString("reason", true);
 
+		const guildMember = await interaction.guild.members.fetch(user.id);
+		const memberHighestRole = guildMember.roles.highest;
+		const modHighestRole = interaction.member.roles.highest;
+
+		// defer reply for ephemeral responses
 		await interaction.deferReply({
 			flags: MessageFlags.Ephemeral,
 		});
 
-		const guildMember = await interaction.guild.members.fetch(user.id);
-
-		const memberHighestRole = guildMember.roles.highest;
-		const modHighestRole = interaction.member.roles.highest;
-
-		if (memberHighestRole.comparePositionTo(modHighestRole) >= 0) {
+		
+		// member role is higher than the moderators role
+		// ensure that server owners bypass this check
+		if (memberHighestRole.comparePositionTo(modHighestRole) >= 0 && (interaction.user.id !== interaction.guild.ownerId)) {
+			const error = new EmbedBuilder()
+				.setTitle(":lock: No Permission")
+				.setDescription("You are not allowed to warn this user as their role is higher than or equal to yours.")
+				.setColor(Colors.Red);
 			interaction.editReply({
-				content:
-					"You cannot warn this user due to role hierarchy! (Role is higher or equal to yours)",
+				embeds: [error],
 			});
 			return;
 		}
+		
 
 		if (!guildMember) {
+			const error = new EmbedBuilder()
+				.setTitle(":question: Not Found")
+				.setDescription("I was not able to find the user in this server, they may have left or are not a member. Please re-check the User ID.")
+				.setTimestamp()
+				.setColor(Colors.Red);
 			interaction.editReply({
-				content: "User not found in server.",
+				embeds: [error],
 			});
 			return;
 		}
@@ -78,6 +98,7 @@ export default class WarnCommand extends BaseCommand {
 		const guildPreferences = await GuildPreferencesCache.get(
 			interaction.guildId,
 		);
+
 
 		if (!guildPreferences) {
 			interaction.editReply({
@@ -95,7 +116,7 @@ export default class WarnCommand extends BaseCommand {
 			).length + 1;
 
 		interaction.channel.send(
-			`${user.username} has been warned for ${reason} (Case #${caseNumber})`,
+			`:hammer: ${user.username} has been warned for ${reason} (Case #${caseNumber})`,
 		);
 
 		await Punishment.create({
@@ -109,9 +130,11 @@ export default class WarnCommand extends BaseCommand {
 			when: new Date(),
 		});
 
+		// send to log channel
 		if (guildPreferences.modlogChannelId) {
+
 			const modEmbed = new EmbedBuilder()
-				.setTitle(`Warn | Case #${caseNumber}`)
+				.setTitle(`:exclamation: Warn | Case #${caseNumber}`)
 				.setColor(Colors.Red)
 				.addFields([
 					{
@@ -129,20 +152,25 @@ export default class WarnCommand extends BaseCommand {
 						value: reason,
 					},
 				])
+				.setThumbnail(user.displayAvatarURL())
 				.setTimestamp();
-
+			
 			logToChannel(interaction.guild, guildPreferences.modlogChannelId, {
 				embeds: [modEmbed],
+				components: [],
 			});
+
+			
 		}
 
 		sendDm(guildMember, {
 			embeds: [
 				new EmbedBuilder()
-					.setTitle("Warn")
+					.setTitle(":exclamation: Warning")
 					.setColor(Colors.Red)
+					.setTimestamp()
 					.setDescription(
-						`You have been warned in ${interaction.guild.name} for: \`${reason}\`.`,
+						`You have been warned in **${interaction.guild.name}** for: \`${reason}\`.`,
 					),
 			],
 		});
@@ -158,28 +186,18 @@ export default class WarnCommand extends BaseCommand {
 			if (points) totalPoints += points;
 		}
 
-		const warnReply =
-			totalPoints >= 10
-				? {
-						embeds: [
-							new EmbedBuilder()
-								.setTitle("ACTION REQUIRED")
-								.setColor(Colors.Red)
-								.setDescription(
-									`**${user.username} has ${totalPoints} points**`,
-								),
-						],
-					}
-				: {
-						embeds: [
-							new EmbedBuilder()
-								.setColor(Colors.Blurple)
-								.setDescription(
-									`${user.username} has ${totalPoints} points`,
-								),
-						],
-					};
+		const warnReply = new EmbedBuilder()
+			.setTitle("Infraction Points")
+			.setColor(Colors.Blurple)
+			.setDescription(`<@${user.id}> is now at ${totalPoints} points.`);
 
-		interaction.editReply(warnReply);
+		await interaction.editReply({
+			embeds: [warnReply],
+			components: [],
+		});
+	}
+
+	async autoComplete(interaction: AutocompleteInteraction) {
+		await infractionAutoComplete(interaction);
 	}
 }
