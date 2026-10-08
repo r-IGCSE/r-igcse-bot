@@ -141,7 +141,7 @@ export default class ReputationTestCommand extends BaseCommand {
 			const updatedRepEmbed = new EmbedBuilder()
 			.setDescription(
 				[
-					`### :star: Reputation Statistics\n <@${interaction.user.id}> has **${allTime}** reputation.\n### :clipboard: **Top Channels**`,
+					`### :star: Reputation Statistics\n <@${user.id}> has **${allTime}** reputation.\n### :clipboard: **Top Channels**`,
 					...(topChannels.length
 						? topChannels.map(
 								({ _id, rep }, index) =>
