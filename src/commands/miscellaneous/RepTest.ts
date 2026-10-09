@@ -1,4 +1,4 @@
-import { ReputationData } from "@/mongo";
+import { ReputationData, Reputation } from "@/mongo";
 import type { DiscordClient } from "@/registry/DiscordClient";
 import {
 	ApplicationIntegrationType,
@@ -48,6 +48,13 @@ export default class ReputationTestCommand extends BaseCommand {
 		const user =
 			interaction.options.getUser("user", false) ?? interaction.user;
 
+		const res = await Reputation.findOne({
+			guildId: interaction.guild.id,
+			userId: user.id,
+		});
+		
+		const allTime = res?.rep || 0;
+
 		const now = Date.now();
 		const baseFilter = {
 			guildId: interaction.guild.id,
@@ -67,7 +74,6 @@ export default class ReputationTestCommand extends BaseCommand {
 			last60Days,
 			last180Days,
 			last365Days,
-			allTime,
 			topChannels,
 		] = await Promise.all([
 			countSince(24 * 60 * 60 * 1000),
@@ -76,7 +82,6 @@ export default class ReputationTestCommand extends BaseCommand {
 			countSince(60 * 24 * 60 * 60 * 1000),
 			countSince(180 * 24 * 60 * 60 * 1000),
 			countSince(365 * 24 * 60 * 60 * 1000),
-			ReputationData.countDocuments(baseFilter),
 			ReputationData.aggregate<{ _id: string; rep: number }>([
 				{ $match: baseFilter },
 				{ $group: { _id: "$channelId", rep: { $sum: 1 } } },
