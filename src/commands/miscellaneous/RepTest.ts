@@ -55,6 +55,18 @@ export default class ReputationTestCommand extends BaseCommand {
 		
 		const allTime = res?.rep || 0;
 
+		const leaderboardRank = (
+			await Reputation.countDocuments({
+				guildId: interaction.guildId,
+				$or: [
+					// check if the record has more reputation than this user
+					{ rep: { $gt: allTime } },
+					// record has the same reputation but user id is before, so it wins tie breaker
+					{ rep: allTime, userId: { $lt: user.id } },
+				]	
+			})
+		) + 1;
+
 		const now = Date.now();
 		const baseFilter = {
 			guildId: interaction.guild.id,
@@ -93,7 +105,7 @@ export default class ReputationTestCommand extends BaseCommand {
 		const repEmbed = new EmbedBuilder()
 			.setDescription(
 				[
-					`### :star: Reputation Statistics\n <@${interaction.user.id}> has **${allTime}** reputation.\n### :clipboard: **Top Channels**`,
+					`### :star: Reputation Statistics\n <@${user.id}> has **${allTime}** reputation.\n-# Ranked **#${leaderboardRank}** on the leaderboard.\n### :clipboard: **Top Channels**`,
 					...(topChannels.length
 						? topChannels.map(
 								({ _id, rep }, index) =>
