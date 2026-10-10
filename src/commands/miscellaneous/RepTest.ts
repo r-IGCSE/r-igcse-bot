@@ -141,7 +141,7 @@ export default class ReputationTestCommand extends BaseCommand {
 					embedDescription = `### :star: Reputation Statistics\n <@${user.id}> has **${allTimeInChannel}** reputation in <#${channel.id}>.`
 				} else {
 					embedDescription = [
-							`### :star: Reputation Statistics\n <@${user.id}> has **${allTime}** reputation.\n-# Ranked **#${leaderboardRank}** on the leaderboard.\n### :clipboard: **Top Channels**`,
+							`### :star: Reputation Statistics\n <@${user.id}> has **${allTime}** reputation.\n-# Ranked **#${leaderboardRank}**/${interaction.guild.memberCount}** on the leaderboard.\n### :clipboard: **Top Channels**`,
 							...(topChannels.length
 								? topChannels.map(
 										({ _id, rep }, index) =>
@@ -237,6 +237,7 @@ export default class ReputationTestCommand extends BaseCommand {
 					last60Days,
 					last180Days,
 					last365Days,
+					topUsers,
 				] = await Promise.all([
 					ReputationData.countDocuments(baseFilter),
 					countSince(24 * 60 * 60 * 1000),
@@ -245,11 +246,25 @@ export default class ReputationTestCommand extends BaseCommand {
 					countSince(60 * 24 * 60 * 60 * 1000),
 					countSince(180 * 24 * 60 * 60 * 1000),
 					countSince(365 * 24 * 60 * 60 * 1000),
+					ReputationData.aggregate<{ _id: string; rep: number }>([
+						{ $match: baseFilter },
+						{ $group: { _id: "$reppedUser", rep: { $sum: 1 } } },
+						{ $sort: { rep: -1, _id: 1 } },
+						{ $limit: 5 },
+					]),
 				]);
 
 				const channelEmbed = new EmbedBuilder()
 					.setDescription(
-						`### :star: Reputation Statistics\n**${allTime}** reputation has been gained in <#${channel.id}> in total.`,
+						[
+							`### :star: Reputation Statistics\n**${allTime}** reputation has been gained in <#${channel.id}> in total.\n### :clipboard: **Top 5 Members**`,
+							...(topUsers.length
+								? topUsers.map(
+										({ _id, rep }, index) =>
+											`${index + 1}. <@${_id}>: ${rep}`,
+									)
+								: ["No user data yet."]),
+						].join("\n"),
 					)
 					.addFields([
 						{ name: "Last 24h", value: `${lastDay}`, inline: true },
@@ -293,8 +308,16 @@ export default class ReputationTestCommand extends BaseCommand {
 				if (buttonInteraction.customId.endsWith("_advancedStats")) {
 					const updatedChannelEmbed = new EmbedBuilder()
 						.setDescription(
-							`### :star: Reputation Statistics\n**${allTime}** reputation has been gained in <#${channel.id}> in total.`,
-						)
+						[
+							`### :star: Reputation Statistics\n**${allTime}** reputation has been gained in <#${channel.id}> in total.\n### :clipboard: **Top 5 Members**`,
+							...(topUsers.length
+								? topUsers.map(
+										({ _id, rep }, index) =>
+											`${index + 1}. <@${_id}>: ${rep}`,
+									)
+								: ["No user data yet."]),
+						].join("\n"),
+					)
 						.addFields([
 							{ name: "Last 24h", value: `${lastDay}`, inline: true },
 							{ name: "Last 7d", value: `${lastWeek}`, inline: true },
