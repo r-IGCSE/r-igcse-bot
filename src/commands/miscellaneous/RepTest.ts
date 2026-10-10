@@ -138,14 +138,14 @@ export default class ReputationTestCommand extends BaseCommand {
 
 				// check if channel is specified
 				if (channel) {
-					embedDescription = `### :star: Reputation Statistics\n <@${user.id}> has **${allTimeInChannel}** reputation in <#${channel.id}>.`
+					embedDescription = `### :star: Reputation Statistics\n <@${user.id}> has **${allTimeInChannel.toLocaleString("en-US")}** reputation in <#${channel.id}>.`
 				} else {
 					embedDescription = [
-							`### :star: Reputation Statistics\n <@${user.id}> has **${allTime}** reputation.\n-# Ranked **#${leaderboardRank}**/${interaction.guild.memberCount}** on the leaderboard.\n### :clipboard: **Top Channels**`,
+							`### :star: Reputation Statistics\n <@${user.id}> has **${allTime.toLocaleString("en-US")}** reputation.\n-# Ranked **#${leaderboardRank.toLocaleString("en-US")}**/${interaction.guild.memberCount.toLocaleString("en-US")}** on the leaderboard.\n### :clipboard: **Top Channels**`,
 							...(topChannels.length
 								? topChannels.map(
 										({ _id, rep }, index) =>
-											`${index + 1}. <#${_id}>: ${rep}`,
+											`${index + 1}. <#${_id}>: ${rep.toLocaleString("en-US")}`,
 									)
 								: ["No channel data yet."]),
 						].join("\n")
@@ -154,9 +154,9 @@ export default class ReputationTestCommand extends BaseCommand {
 				const repEmbed = new EmbedBuilder()
 					.setDescription(embedDescription)
 					.addFields([
-						{ name: "Last 24h", value: `${lastDay}`, inline: true },
-						{ name: "Last 7d", value: `${lastWeek}`, inline: true },
-						{ name: "Last 30d", value: `${last30Days}`, inline: true },
+						{ name: "Last 24h", value: `${lastDay.toLocaleString("en-US")}`, inline: true },
+						{ name: "Last 7d", value: `${lastWeek.toLocaleString("en-US")}`, inline: true },
+						{ name: "Last 30d", value: `${last30Days.toLocaleString("en-US")}`, inline: true },
 						//{ name: "Last 60d", value: `${last60Days}`, inline: true },
 						//{ name: "Last 180d", value: `${last180Days}`, inline: true },
 					])
@@ -199,12 +199,12 @@ export default class ReputationTestCommand extends BaseCommand {
 					const updatedRepEmbed = new EmbedBuilder()
 					.setDescription(embedDescription)
 					.addFields([
-						{ name: "Last 24h", value: `${lastDay}`, inline: true },
-						{ name: "Last 7d", value: `${lastWeek}`, inline: true },
-						{ name: "Last 30d", value: `${last30Days}`, inline: true },
-						{ name: "Last 60d", value: `${last60Days}`, inline: true },
-						{ name: "Last 6 Months", value: `${last180Days}`, inline: true },
-						{ name: "Last 12 Months", value: `${last365Days}`, inline: true },
+						{ name: "Last 24h", value: `${lastDay.toLocaleString("en-US")}`, inline: true },
+						{ name: "Last 7d", value: `${lastWeek.toLocaleString("en-US")}`, inline: true },
+						{ name: "Last 30d", value: `${last30Days.toLocaleString("en-US")}`, inline: true },
+						{ name: "Last 60d", value: `${last60Days.toLocaleString("en-US")}`, inline: true },
+						{ name: "Last 6 Months", value: `${last180Days.toLocaleString("en-US")}`, inline: true },
+						{ name: "Last 12 Months", value: `${last365Days.toLocaleString("en-US")}`, inline: true },
 					])
 					.setColor(Colors.Blurple);
 
@@ -257,19 +257,19 @@ export default class ReputationTestCommand extends BaseCommand {
 				const channelEmbed = new EmbedBuilder()
 					.setDescription(
 						[
-							`### :star: Reputation Statistics\n**${allTime}** reputation has been gained in <#${channel.id}> in total.\n### :clipboard: **Top 5 Members**`,
+							`### :star: Reputation Statistics\n**${allTime.toLocaleString("en-US")}** reputation has been gained in <#${channel.id}> in total.\n### :clipboard: **Top 5 Members**`,
 							...(topUsers.length
 								? topUsers.map(
 										({ _id, rep }, index) =>
-											`${index + 1}. <@${_id}>: ${rep}`,
+											`${index + 1}. <@${_id}>: ${rep.toLocaleString("en-US")}`,
 									)
 								: ["No user data yet."]),
 						].join("\n"),
 					)
 					.addFields([
-						{ name: "Last 24h", value: `${lastDay}`, inline: true },
-						{ name: "Last 7d", value: `${lastWeek}`, inline: true },
-						{ name: "Last 30d", value: `${last30Days}`, inline: true },
+						{ name: "Last 24h", value: `${lastDay.toLocaleString("en-US")}`, inline: true },
+						{ name: "Last 7d", value: `${lastWeek.toLocaleString("en-US")}`, inline: true },
+						{ name: "Last 30d", value: `${last30Days.toLocaleString("en-US")}`, inline: true },
 					])
 					.setColor(Colors.Blurple);
 
@@ -309,22 +309,22 @@ export default class ReputationTestCommand extends BaseCommand {
 					const updatedChannelEmbed = new EmbedBuilder()
 						.setDescription(
 						[
-							`### :star: Reputation Statistics\n**${allTime}** reputation has been gained in <#${channel.id}> in total.\n### :clipboard: **Top 5 Members**`,
+							`### :star: Reputation Statistics\n**${allTime.toLocaleString("en-US")}** reputation has been gained in <#${channel.id}> in total.\n### :clipboard: **Top 5 Members**`,
 							...(topUsers.length
 								? topUsers.map(
 										({ _id, rep }, index) =>
-											`${index + 1}. <@${_id}>: ${rep}`,
+											`${index + 1}. <@${_id}>: ${rep.toLocaleString("en-US")}`,
 									)
 								: ["No user data yet."]),
 						].join("\n"),
 					)
 						.addFields([
-							{ name: "Last 24h", value: `${lastDay}`, inline: true },
-							{ name: "Last 7d", value: `${lastWeek}`, inline: true },
-							{ name: "Last 30d", value: `${last30Days}`, inline: true },
-							{ name: "Last 60d", value: `${last60Days}`, inline: true },
-							{ name: "Last 6 Months", value: `${last180Days}`, inline: true },
-							{ name: "Last 12 Months", value: `${last365Days}`, inline: true },
+							{ name: "Last 24h", value: `${lastDay.toLocaleString("en-US")}`, inline: true },
+							{ name: "Last 7d", value: `${lastWeek.toLocaleString("en-US")}`, inline: true },
+							{ name: "Last 30d", value: `${last30Days.toLocaleString("en-US")}`, inline: true },
+							{ name: "Last 60d", value: `${last60Days.toLocaleString("en-US")}`, inline: true },
+							{ name: "Last 6 Months", value: `${last180Days.toLocaleString("en-US")}`, inline: true },
+							{ name: "Last 12 Months", value: `${last365Days.toLocaleString("en-US")}`, inline: true },
 						])
 						.setColor(Colors.Blurple);
 
@@ -343,20 +343,6 @@ export default class ReputationTestCommand extends BaseCommand {
 				]);
 
 				const allTime = res[0]?.totalRep ?? 0;
-
-				/*
-				const leaderboardRank = (
-					await Reputation.countDocuments({
-						guildId: interaction.guildId,
-						$or: [
-							// check if the record has more reputation than this user
-							{ rep: { $gt: allTime } },
-							// record has the same reputation but user id is before, so it wins tie breaker
-							{ rep: allTime, userId: { $lt: user.id } },
-						]	
-					})
-				) + 1;
-				*/
 
 				const now = Date.now();
 				const baseFilter = {
@@ -395,19 +381,19 @@ export default class ReputationTestCommand extends BaseCommand {
 				const repEmbed = new EmbedBuilder()
 					.setDescription(
 						[
-							`### :star: Reputation Statistics\n **${interaction.guild.name}** has **${allTime}** reputation.\n### :clipboard: **Top Channels**`,
+							`### :star: Reputation Statistics\n **${interaction.guild.name}** has **${allTime.toLocaleString("en-US")}** reputation.\n### :clipboard: **Top Channels**`,
 							...(topChannels.length
 								? topChannels.map(
 										({ _id, rep }, index) =>
-											`${index + 1}. <#${_id}>: ${rep}`,
+											`${index + 1}. <#${_id}>: ${rep.toLocaleString("en-US")}`,
 									)
 								: ["No channel data yet."]),
 						].join("\n"),
 					)
 					.addFields([
-						{ name: "Last 24h", value: `${lastDay}`, inline: true },
-						{ name: "Last 7d", value: `${lastWeek}`, inline: true },
-						{ name: "Last 30d", value: `${last30Days}`, inline: true },
+						{ name: "Last 24h", value: `${lastDay.toLocaleString("en-US")}`, inline: true },
+						{ name: "Last 7d", value: `${lastWeek.toLocaleString("en-US")}`, inline: true },
+						{ name: "Last 30d", value: `${last30Days.toLocaleString("en-US")}`, inline: true },
 						//{ name: "Last 60d", value: `${last60Days}`, inline: true },
 						//{ name: "Last 180d", value: `${last180Days}`, inline: true },
 					])
@@ -450,22 +436,22 @@ export default class ReputationTestCommand extends BaseCommand {
 					const updatedRepEmbed = new EmbedBuilder()
 					.setDescription(
 						[
-							`### :star: Reputation Statistics\n **${interaction.guild.name}** has **${allTime}** reputation.\n### :clipboard: **Top Channels**`,
+							`### :star: Reputation Statistics\n **${interaction.guild.name}** has **${allTime.toLocaleString("en-US")}** reputation.\n### :clipboard: **Top Channels**`,
 							...(topChannels.length
 								? topChannels.map(
 										({ _id, rep }, index) =>
-											`${index + 1}. <#${_id}>: ${rep}`,
+											`${index + 1}. <#${_id}>: ${rep.toLocaleString("en-US")}`,
 									)
 								: ["No channel data yet."]),
 						].join("\n"),
 					)
 					.addFields([
-						{ name: "Last 24h", value: `${lastDay}`, inline: true },
-						{ name: "Last 7d", value: `${lastWeek}`, inline: true },
-						{ name: "Last 30d", value: `${last30Days}`, inline: true },
-						{ name: "Last 60d", value: `${last60Days}`, inline: true },
-						{ name: "Last 6 Months", value: `${last180Days}`, inline: true },
-						{ name: "Last 12 Months", value: `${last365Days}`, inline: true },
+						{ name: "Last 24h", value: `${lastDay.toLocaleString("en-US")}`, inline: true },
+						{ name: "Last 7d", value: `${lastWeek.toLocaleString("en-US")}`, inline: true },
+						{ name: "Last 30d", value: `${last30Days.toLocaleString("en-US")}`, inline: true },
+						{ name: "Last 60d", value: `${last60Days.toLocaleString("en-US")}`, inline: true },
+						{ name: "Last 6 Months", value: `${last180Days.toLocaleString("en-US")}`, inline: true },
+						{ name: "Last 12 Months", value: `${last365Days.toLocaleString("en-US")}`, inline: true },
 					])
 					.setColor(Colors.Blurple);
 
