@@ -15,7 +15,8 @@
 		"@huggingface/transformers": "^3.6.3",
 		"bufferutil": "^4.0.9",
 		"chucklejs": "^1.0.0",
-		"discord.js": "^14.18.0",
+		"discord.js": "14.27.0",
+		"dotenv": "^17.4.2",
 		"fuse.js": "^7.1.0",
 		"humanize-duration": "^3.32.1",
 		"mongoose": "^8.12.2",
@@ -23,8 +24,7 @@
 		"redis": "^4.7.0",
 		"redis-om": "^0.4.7",
 		"utf-8-validate": "^6.0.5",
-		"uuid": "^9.0.1",
-		"zlib-sync": "^0.1.9"
+		"uuid": "^9.0.1"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^1.9.4",
@@ -36,7 +36,6 @@
 	"trustedDependencies": [
 		"@biomejs/biome",
 		"bufferutil",
-		"utf-8-validate",
-		"zlib-sync"
+		"utf-8-validate"
 	]
 }

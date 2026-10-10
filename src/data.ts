@@ -41,7 +41,6 @@ export const tyAliases = [
 	"tankyou",
 	"tank you",
 	"thankyou",
-	"thank",
 	"ty",
 	"tyty",
 	"tyy",

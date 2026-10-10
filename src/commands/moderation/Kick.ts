@@ -1,5 +1,5 @@
 import { Punishment } from "@/mongo";
-import { GuildPreferencesCache } from "@/redis";
+import { GuildPreferencesCache, InfractionsCache } from "@/redis";
 import type { DiscordClient } from "@/registry/DiscordClient";
 import BaseCommand, {
 	type DiscordChatInputCommandInteraction,
@@ -14,7 +14,10 @@ import {
 	InteractionContextType,
 	SlashCommandBuilder,
 	MessageFlags,
+	type AutocompleteInteraction,
 } from "discord.js";
+import { Logger } from "@discordforge/logger";
+import { infractionAutoComplete } from "../moderation/infractionAutoComplete";
 
 export default class KickCommand extends BaseCommand {
 	constructor() {
@@ -32,7 +35,8 @@ export default class KickCommand extends BaseCommand {
 					option
 						.setName("reason")
 						.setDescription("Reason for kick")
-						.setRequired(true),
+						.setRequired(true)
+						.setAutocomplete(true),
 				)
 				.setDefaultMemberPermissions(PermissionFlagsBits.KickMembers)
 				.setContexts(InteractionContextType.Guild)
@@ -46,17 +50,21 @@ export default class KickCommand extends BaseCommand {
 	) {
 		if (!interaction.channel || !interaction.channel.isTextBased()) return;
 
-		await interaction.deferReply({
-			flags: MessageFlags.Ephemeral,
-		});
-
 		const user = interaction.options.getUser("user", true);
 		const reason = interaction.options.getString("reason", true);
 
+		// defer message
+		await interaction.deferReply({
+			flags: MessageFlags.Ephemeral,
+		})
+
 		if (user.id === interaction.user.id) {
+			const error = new EmbedBuilder()
+				.setTitle(":lock: What are you doing?")
+				.setDescription("You cannot kick yourself, ||consider leaving the server instead||.")
+				.setColor(Colors.Red);
 			interaction.editReply({
-				content:
-					"You cannot kick yourself, ||consider leaving the server instead||.",
+				embeds: [error],
 			});
 			return;
 		}
@@ -80,41 +88,46 @@ export default class KickCommand extends BaseCommand {
 				})
 			).length + 1;
 
-		const dmEmbed = new EmbedBuilder()
-			.setAuthor({
-				name: `You have been kicked from ${interaction.guild.name}!`,
-				iconURL: client.user.displayAvatarURL(),
-			})
-			.setDescription(
-				`Hi there from ${interaction.guild.name}. You have been kicked from the server due to \`${reason}\`.`,
-			)
-			.setColor(Colors.Red);
-
 		const guildMember = interaction.guild.members.cache.get(user.id);
 		if (!guildMember) return;
 
 		if (!guildMember.kickable) {
+			const error = new EmbedBuilder()
+				.setTitle(":lock: No Permission")
+				.setDescription("I am not able to kick this user.")
+				.setColor(Colors.Red);
 			interaction.editReply({
-				content: "I cannot kick this user! (Missing permissions)",
+				embeds: [error],
 			});
-
 			return;
 		}
 
 		const memberHighestRole = guildMember.roles.highest;
 		const modHighestRole = interaction.member.roles.highest;
 
-		if (memberHighestRole.comparePositionTo(modHighestRole) >= 0) {
+		// member role is higher than the moderators role
+		// ensure that server owners bypass this check
+		if (memberHighestRole.comparePositionTo(modHighestRole) >= 0 && (interaction.user.id !== interaction.guild.ownerId)) {
+			const error = new EmbedBuilder()
+				.setTitle(":lock: No Permission")
+				.setDescription("You are not allowed to kick this user as their role is higher than or equal to yours.")
+				.setColor(Colors.Red);
 			interaction.editReply({
-				content:
-					"You cannot kick this user due to role hierarchy! (Role is higher or equal to yours)",
+				embeds: [error],
 			});
-
 			return;
 		}
 
 		sendDm(guildMember, {
-			embeds: [dmEmbed],
+			embeds: [
+				new EmbedBuilder()
+					.setTitle(":hammer: Kicked")
+					.setColor(Colors.Red)
+					.setTimestamp()
+					.setDescription(
+						`You have been kicked from **${interaction.guild.name}** for: \`${reason}\`.`,
+					),
+			],
 		});
 
 		try {
@@ -148,7 +161,7 @@ export default class KickCommand extends BaseCommand {
 
 		if (guildPreferences.modlogChannelId) {
 			const modEmbed = new EmbedBuilder()
-				.setTitle(`Kick | Case #${caseNumber}`)
+				.setTitle(`:hammer: Kick | Case #${caseNumber}`)
 				.setColor(Colors.Red)
 				.addFields([
 					{
@@ -166,6 +179,7 @@ export default class KickCommand extends BaseCommand {
 						value: reason,
 					},
 				])
+				.setThumbnail(user.displayAvatarURL())
 				.setTimestamp();
 
 			logToChannel(interaction.guild, guildPreferences.modlogChannelId, {
@@ -173,12 +187,12 @@ export default class KickCommand extends BaseCommand {
 			});
 		}
 
-		interaction.editReply({
-			content:
-				"https://tenor.com/view/asdf-movie-punt-kick-donewiththis-gif-26537188",
-		});
 		interaction.channel.send(
 			`${user.username} has been kicked. (Case #${caseNumber})`,
 		);
+	}
+
+	async autoComplete(interaction: AutocompleteInteraction) {
+		await infractionAutoComplete(interaction);
 	}
 }
