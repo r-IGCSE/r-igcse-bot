@@ -141,7 +141,7 @@ export default class ReputationTestCommand extends BaseCommand {
 					embedDescription = `### :star: Reputation Statistics\n <@${user.id}> has **${allTimeInChannel.toLocaleString("en-US")}** reputation in <#${channel.id}>.`
 				} else {
 					embedDescription = [
-							`### :star: Reputation Statistics\n <@${user.id}> has **${allTime.toLocaleString("en-US")}** reputation.\n-# Ranked **#${leaderboardRank.toLocaleString("en-US")}**/${interaction.guild.memberCount.toLocaleString("en-US")}** on the leaderboard.\n### :clipboard: **Top Channels**`,
+							`### :star: Reputation Statistics\n <@${user.id}> has **${allTime.toLocaleString("en-US")}** reputation.\n-# Ranked **#${leaderboardRank.toLocaleString("en-US")}**/${interaction.guild.memberCount.toLocaleString("en-US")} on the leaderboard.\n### :clipboard: **Top Channels**`,
 							...(topChannels.length
 								? topChannels.map(
 										({ _id, rep }, index) =>
