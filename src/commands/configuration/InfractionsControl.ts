@@ -1,4 +1,5 @@
 import { InfractionsCache } from "@/redis";
+import { Logger } from "@discordforge/logger";
 import type { DiscordClient } from "@/registry/DiscordClient";
 import BaseCommand, {
 	type DiscordChatInputCommandInteraction,
@@ -182,15 +183,15 @@ export default class InfractionControlCommand extends BaseCommand {
 	}
 
 	async autoComplete(interaction: AutocompleteInteraction) {
-        // auto complete reason based on search
-		const reasons = await InfractionsCache.autoComplete(
-			interaction.options.getFocused().toString(),
-		);
-		await interaction.respond(
-			reasons.slice(0, 25).map((reason) => ({
-				name: reason,
-				value: reason,
-			})),
-		);
+		const phrase = interaction.options.getFocused().toString();
+		InfractionsCache.autoComplete(phrase)
+			.then(async (reasons) => {
+				await interaction.respond(
+					reasons
+						.map((reason) => ({ name: reason, value: reason }))
+						.slice(0, 25),
+				);
+			})
+			.catch(Logger.error);
 	}
 }
