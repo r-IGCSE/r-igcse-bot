@@ -9,6 +9,8 @@ r/IGCSE Bot is a TypeScript Discord Bot primarily developed for the [r/IGCSE Dis
 
 [Add r/IGCSE Bot to your Discord Server](https://discord.com/api/oauth2/authorize?client_id=861445044790886467&permissions=8&scope=bot).
 
+[r/IGCSE Bot Privacy Policy](https://www.r-igcse.com/privacy-policy)
+
 The `v1.0` version of this bot, written in Python, rolled into use on July 5, 2021 and has come a long way since.
 
 The `v2.0` version of this bot, entirely re-written in TypeScript, was released on March 22, 2024.
