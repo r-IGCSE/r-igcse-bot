@@ -2,15 +2,25 @@ import { formatMessage } from "@/commands/study/Keyword";
 import Select from "@/components/Select";
 import Buttons from "@/components/practice/views/Buttons";
 import { botYwResponses, tyAliases, ywAliases } from "@/data";
-import { PrivateDmThread, Reputation, type IGuildPreferences } from "@/mongo";
+import {
+	type IGuildPreferences,
+	MessageOptOut,
+	PrivateDmThread,
+	Reputation,
+} from "@/mongo";
 import { DmGuildPreference } from "@/mongo/schemas/DmGuildPreference";
+import { ReputationData } from "@/mongo/schemas/ReputationData";
+import { ReputationQueue } from "@/mongo/schemas/ReputationQueue";
 import {
 	GuildPreferencesCache,
 	KeywordCache,
+	MessageOptOutCache,
 	StickyMessageCache,
 } from "@/redis";
 import type { ICachedStickyMessage } from "@/redis/schemas/StickyMessage";
+import { syncCommands } from "@/registry";
 import { logToChannel } from "@/utils/Logger";
+import { isBotDev } from "@/utils/isBotDev";
 import sendDm from "@/utils/sendDm";
 import { Logger } from "@discordforge/logger";
 import {
@@ -32,10 +42,6 @@ import {
 import { v4 as uuidv4 } from "uuid";
 import type { DiscordClient } from "../registry/DiscordClient";
 import BaseEvent from "../registry/Structure/BaseEvent";
-import { syncCommands } from "@/registry";
-import { isBotDev } from "@/utils/isBotDev";
-import { ReputationData } from "@/mongo/schemas/ReputationData";
-import { ReputationQueue } from "@/mongo/schemas/ReputationQueue";
 
 const stickyCounter: Record<string, number> = {};
 
@@ -54,26 +60,28 @@ export default class MessageCreateEvent extends BaseEvent {
 			return;
 
 		if (message.content === "!sync_commands") {
-      if (!(await isBotDev(client, message.author.id))) {
-        return;
-      }
+			if (!(await isBotDev(client, message.author.id))) {
+				return;
+			}
 
-      await syncCommands(client)
-        .then(() => {
-          Logger.info(
-            `Synced application commands globally (by ${message.author.displayName})`,
-          );
-          message.reply("Succesfully synced commands.");
-        })
-        .catch((e) => {
-          Logger.error(
-            `Error syncing application commands globally (by ${message.author.displayName}): ${e}`,
-          );
-          message.reply("Error syncing commands.");
-        });
+			await syncCommands(client)
+				.then(() => {
+					Logger.info(
+						`Synced application commands globally (by ${message.author.displayName})`,
+					);
+					message.reply("Succesfully synced commands.");
+				})
+				.catch((e) => {
+					Logger.error(
+						`Error syncing application commands globally (by ${message.author.displayName}): ${e}`,
+					);
+					message.reply("Error syncing commands.");
+				});
 
-      return;
-    }
+			return;
+		}
+
+		if (await MessageOptOutCache.get(message.author.id)) return;
 
 		if (message.inGuild()) {
 			const keyword = message.content.trim().toLowerCase();
@@ -478,7 +486,6 @@ To change the server you're contacting, use the \`/swap\` command`,
 		await PrivateDmThread.findOneAndUpdate(
 			{
 				threadId: thread.id,
-
 			},
 			{
 				oneWay: true,
@@ -577,7 +584,11 @@ To change the server you're contacting, use the \`/swap\` command`,
 				}
 				case "set_oneway": {
 					try {
-						await this.handleSetOneWay(client, user, message.channel);
+						await this.handleSetOneWay(
+							client,
+							user,
+							message.channel,
+						);
 					} catch (error) {
 						await message.reply(
 							"An error occurred while setting one-way status.",
@@ -596,7 +607,11 @@ To change the server you're contacting, use the \`/swap\` command`,
 				}
 				case "unset_oneway": {
 					try {
-						await this.handleUnsetOneWay(client, user, message.channel);
+						await this.handleUnsetOneWay(
+							client,
+							user,
+							message.channel,
+						);
 					} catch (error) {
 						await message.reply(
 							"An error occurred while unsetting one-way status.",
@@ -776,23 +791,40 @@ To change the server you're contacting, use the \`/swap\` command`,
 
 			const relevantMessages = recentMessages.slice(startIndex);
 
+			// don't include messages authored by users who opted out of the bot seeing their messages
+			const optedOutUsers = new Set(
+				(
+					await MessageOptOut.find({
+						userId: {
+							$in: [member.id, user.reppedBy].filter(
+								Boolean,
+							) as string[],
+						},
+					}).select("userId")
+				).map((optOut) => optOut.userId),
+			);
+
 			const conversation: {
 				author: string;
 				content: string;
 				attachmentUrls: string[];
-			}[] = relevantMessages.map((msg) => ({
-				// anonymize by using Asker and Responder instead of actual usernames
-				author: msg.author.id === user.reppedBy ? "Asker" : "Responder",
-				content: msg.content,
-				attachmentUrls: msg.attachments.map((a) => a.url),
-			}));
+			}[] = relevantMessages
+				.filter((msg) => !optedOutUsers.has(msg.author.id))
+				.map((msg) => ({
+					// anonymize by using Asker and Responder instead of actual usernames
+					author:
+						msg.author.id === user.reppedBy ? "Asker" : "Responder",
+					content: msg.content,
+					attachmentUrls: msg.attachments.map((a) => a.url),
+				}));
 
-			await ReputationQueue.create({
-				reputationDataObjectId: repData._id.toString(),
-				input: conversation,
-			}).catch((e) =>
-				Logger.error(`Error creating ReputationQueue: ${e}`),
-			);
+			if (conversation.length > 0)
+				await ReputationQueue.create({
+					reputationDataObjectId: repData._id.toString(),
+					input: conversation,
+				}).catch((e) =>
+					Logger.error(`Error creating ReputationQueue: ${e}`),
+				);
 
 			let content = `Gave +1 Rep to <@${user.id}> (${rep})`;
 

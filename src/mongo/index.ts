@@ -30,3 +30,7 @@ export { ClosedDmThread, type IClosedDmThread } from "./schemas/ClosedDmThread";
 export { Application, type IApplication } from "./schemas/Application";
 // export { ReputationGraphed, type IReputationGraphed } from "./schemas/ReputationGraphed"; remove this line
 export { ResourceTag, type IResourceTag } from "./schemas/ResourceTag.ts";
+export {
+	MessageOptOut,
+	type IMessageOptOut,
+} from "./schemas/MessageOptOut";

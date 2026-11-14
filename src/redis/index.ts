@@ -8,6 +8,7 @@ import { StickyMessageRepository } from "./schemas/StickyMessage";
 import { ModPingRepository } from "./schemas/ModPing";
 import { UserRepository } from "./schemas/User";
 import { InfractionsRepository } from "./schemas/Infractions";
+import { MessageOptOutRepository } from "./schemas/MessageOptOut";
 
 export const redis = createClient({
 	url: process.env.REDIS_URL,
@@ -23,3 +24,4 @@ export const UserCache = new UserRepository(redis);
 export const ButtonInteractionCache = new ButtonInteractionRepository(redis);
 export const KeywordCache = new KeywordRepository(redis);
 export const InfractionsCache = new InfractionsRepository(redis);
+export const MessageOptOutCache = new MessageOptOutRepository(redis);
